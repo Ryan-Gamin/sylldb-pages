@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SyllDB — Custom Syllable Lyrics Cloud & TTML Manager</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon" style="background: transparent; border: none; padding: 0;">
+        <img src="icon.svg" alt="SyllDB Icon" style="width: 42px; height: 42px; border-radius: 10px; display: block;" />
+      </div>
+      <div class="brand-text">
+        <h1>SyllDB</h1>
+        <span>Syllable Lyrics Cloud & TTML Studio</span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs" role="tablist">
+      <button class="nav-btn active" data-tab="tab-upload" role="tab" aria-selected="true">
+        <span>🚀</span> Upload & Sync
+      </button>
+      <button class="nav-btn" data-tab="tab-manager" role="tab" aria-selected="false">
+        <span>📚</span> SyllDB Manager
+      </button>
+      <button class="nav-btn" data-tab="tab-api" role="tab" aria-selected="false">
+        <span>⚡</span> SyllDB API
+      </button>
+    </nav>
+
+    <!-- Server Live Status & Storage Capacity Bar -->
+    <div class="server-badge" id="server-status-pill">
+      <div class="status-dot" id="server-status-dot"></div>
+      <div class="server-status-info">
+        <div class="server-status-top">
+          <span id="server-status-text">0/250K songs stored</span>
+        </div>
+        <div class="server-storage-bar-track">
+          <div class="server-storage-bar-fill" id="server-storage-bar-fill" style="width: 0%;"></div>
+        </div>
+        <div class="server-status-sub" id="server-status-subtext">0.00 MB / 10 GB capacity</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-container">
+
+    <!-- ============================================== -->
+    <!-- TAB 1: UPLOAD & SYNCHRONIZE WIZARD -->
+    <!-- ============================================== -->
+    <section id="tab-upload" class="tab-pane active" role="tabpanel">
+
+      <!-- Stepper Indicator -->
+      <div class="stepper">
+        <div class="step-item active" id="step-indicator-1" onclick="goToStep(1)">
+          <div class="step-num">1</div>
+          <div class="step-title">Choose Song</div>
+        </div>
+        <div class="stepper-connector"></div>
+        <div class="step-item" id="step-indicator-2" onclick="goToStep(2)">
+          <div class="step-num">2</div>
+          <div class="step-title">Upload File</div>
+        </div>
+        <div class="stepper-connector"></div>
+        <div class="step-item" id="step-indicator-3" onclick="goToStep(3)">
+          <div class="step-num">3</div>
+          <div class="step-title">Preview & Sync</div>
+        </div>
+        <div class="stepper-connector"></div>
+        <div class="step-item" id="step-indicator-4" onclick="goToStep(4)">
+          <div class="step-num">4</div>
+          <div class="step-title">Publish Live</div>
+        </div>
+      </div>
+
+      <!-- STEP 1: CHOOSE SONG -->
+      <article class="glass-panel" id="step-panel-1">
+        <div class="panel-header">
+          <h2>1. Select Your Song</h2>
+          <p>Paste any Spotify track link directly or search Spotify/Deezer/iTunes catalog for automatic metadata and audio sync.</p>
+        </div>
+
+        <div class="search-box-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="song-search-input" class="search-input" placeholder="Paste any Spotify song link (e.g. open.spotify.com/track/...) or search song / artist..." autocomplete="off">
+          <div class="search-spinner" id="search-spinner"></div>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem; display: flex; align-items: center; gap: 0.4rem;">
+          <span style="color: var(--primary); font-weight: 600;">💡 Pro-Tip:</span> You can paste any Spotify link, track URI (spotify:track:...), or ID directly into the bar!
+        </div>
+
+        <!-- Search Results Grid -->
+        <div class="search-results" id="search-results">
+          <!-- Populated by JavaScript -->
+        </div>
+
+        <!-- Selected Song Banner -->
+        <div class="selected-song-banner" id="selected-song-banner" style="display: none;">
+          <img src="" id="banner-art" class="banner-art" alt="Album Cover">
+          <div class="banner-details">
+            <h3 id="banner-title">Song Title</h3>
+            <p id="banner-artist">Artist Name • Album Name</p>
+            <div class="badge-row">
+              <span class="pill-badge green" id="banner-duration">0:00</span>
+              <span class="pill-badge" id="banner-itunes-id">Track ID: -</span>
+              <span class="pill-badge" id="banner-preview-status">Preview Ready</span>
+            </div>
+          </div>
+          <button class="btn-secondary" onclick="clearSelectedSong()">Change</button>
+        </div>
+
+        <!-- Metadata & Track ID override -->
+        <div class="form-row">
+          <div class="input-group">
+            <label for="input-spotify-id">Track ID / Identifier (e.g. Spotify Track ID or Custom Key)</label>
+            <input type="text" id="input-spotify-id" class="input-field" placeholder="e.g. 4cOdK2wGLETKBW3PvgPWqT or my_custom_track">
+          </div>
+          <div class="input-group">
+            <label for="input-album">Album Name (Optional)</label>
+            <input type="text" id="input-album" class="input-field" placeholder="Album Title">
+          </div>
+        </div>
+
+        <!-- Spotify Live Preview Embed -->
+        <div class="spotify-embed-card" id="spotify-embed-container" style="display: none; margin-top: 1.5rem; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md); padding: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.3rem;">🎧</span>
+              <div>
+                <h4 style="font-weight: 700; font-size: 0.95rem; color: #fff; margin: 0;">Spotify Live Player Embed</h4>
+                <span style="font-size: 0.75rem; color: var(--text-dim);">Live interactive preview widget</span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="pill-badge green" style="font-size: 0.72rem; padding: 3px 10px;">Live Preview</span>
+              <a id="spotify-open-link" href="#" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="font-size: 0.75rem; padding: 4px 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                Open in Spotify ↗
+              </a>
+            </div>
+          </div>
+          <div id="spotify-iframe-wrapper" style="border-radius: 12px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <iframe
+              id="spotify-live-iframe"
+              data-testid="embed-iframe"
+              style="border-radius: 12px; width: 100%; border: 0; display: block;"
+              src=""
+              width="100%"
+              height="352"
+              frameBorder="0"
+              allowfullscreen=""
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy">
+            </iframe>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+          <button class="btn-primary" id="btn-next-to-upload" onclick="goToStep(2)">
+            Continue to Upload Lyrics →
+          </button>
+        </div>
+      </article>
+
+      <!-- STEP 2: UPLOAD LYRICS FILE -->
+      <article class="glass-panel" id="step-panel-2" style="display: none;">
+        <div class="panel-header">
+          <h2>2. Upload or Paste Lyrics</h2>
+          <p>Supports Apple Music Syllable TTML (<code>.ttml</code>), Enhanced LRC (<code>.elrc</code>), Karaoke ASS (<code>.ass</code>), BeautifulLyrics JSON, or Plain Text (<code>.txt</code>).</p>
+        </div>
+
+        <!-- Sync Type Selector for Manual Upload -->
+        <div class="type-selector-container">
+          <div class="type-selector-header">
+            <label>Lyric Sync Type</label>
+            <span id="badge-detected-type" class="pill-badge" style="font-size: 0.72rem;">✨ Auto-Detect</span>
+          </div>
+          <div class="type-pill-group" id="manual-type-selector">
+            <button type="button" class="type-pill-btn active" data-type="auto" onclick="setManualLyricType('auto')">
+              ✨ Auto Detect
+            </button>
+            <button type="button" class="type-pill-btn" data-type="Syllable" onclick="setManualLyricType('Syllable')">
+              🔥 Syllable
+            </button>
+            <button type="button" class="type-pill-btn" data-type="Word" onclick="setManualLyricType('Word')">
+              ⚡ Word
+            </button>
+            <button type="button" class="type-pill-btn" data-type="Line" onclick="setManualLyricType('Line')">
+              📄 Line
+            </button>
+            <button type="button" class="type-pill-btn" data-type="Static" onclick="setManualLyricType('Static')">
+              📝 Static
+            </button>
+          </div>
+        </div>
+
+        <!-- Drag & Drop Zone -->
+        <div class="dropzone" id="lyrics-dropzone">
+          <input type="file" id="file-input" accept=".ttml,.xml,.elrc,.lrc,.ass,.json,.txt" style="display: none;">
+          <div class="dropzone-icon">📁</div>
+          <h3>Drag & Drop lyrics file here</h3>
+          <p>or click to browse from your computer</p>
+          <div class="format-tags">
+            <span class="format-tag">.TTML (Apple Music)</span>
+            <span class="format-tag">.ELRC (Enhanced LRC)</span>
+            <span class="format-tag">.ASS (Karaoke)</span>
+            <span class="format-tag">.JSON</span>
+            <span class="format-tag">.TXT (Plain / Static)</span>
+          </div>
+        </div>
+
+        <!-- Raw Text Accordion -->
+        <button type="button" class="raw-toggle" id="btn-toggle-raw" onclick="toggleRawTextarea()">
+          <span>▶</span> Or paste raw lyrics text directly
+        </button>
+
+        <div class="raw-textarea-wrapper" id="raw-textarea-wrapper">
+          <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
+            <label for="raw-format-select" style="font-size: 0.8rem; color: var(--text-muted);">Format:</label>
+            <select id="raw-format-select" class="input-field" style="padding: 4px 10px; width: auto;">
+              <option value="auto">Auto-Detect</option>
+              <option value="ttml">Apple Music TTML (.ttml)</option>
+              <option value="elrc">Enhanced LRC (.elrc)</option>
+              <option value="ass">Karaoke ASS (.ass)</option>
+              <option value="json">BeautifulLyrics JSON (.json)</option>
+              <option value="static">Plain / Static Text (.txt)</option>
+            </select>
+          </div>
+          <textarea id="raw-lyrics-input" class="raw-textarea" placeholder="Paste your <tt>...</tt> XML, [00:12.34]<00:12.34>word ELRC, Dialogue: {\k...} ASS, or plain text lyrics here..."></textarea>
+          <button class="btn-secondary" style="margin-top: 8px;" onclick="parseRawLyricsText()">Parse Raw Text</button>
+        </div>
+
+        <!-- Alignmenter AI Toggle -->
+        <div style="margin-top: 1.5rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+          <div>
+            <div style="font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+              <span>✨</span> Aligned with Alignmenter AI
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+              Enable this if lyrics were synced using the Alignmenter AI tool. Triggers the subtle 'AM AI Synced' indicator in Spotify Plus.
+            </div>
+          </div>
+          <label class="switch" style="position: relative; display: inline-block; width: 48px; height: 26px; flex-shrink: 0;">
+            <input type="checkbox" id="toggle-alignmenter" style="opacity: 0; width: 0; height: 0;">
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; justify-content: space-between;">
+          <button class="btn-secondary" onclick="goToStep(1)">← Back</button>
+          <button class="btn-primary" id="btn-next-to-preview" onclick="goToStep(3)" disabled>
+            Continue to Preview →
+          </button>
+        </div>
+      </article>
+
+      <!-- STEP 3: PREVIEW & SYNC -->
+      <article class="glass-panel" id="step-panel-3" style="display: none;">
+        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+          <div>
+            <h2>3. Interactive Karaoke Preview</h2>
+            <p>Listen, scrub, and verify word-by-word syllable timing in real time.</p>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <input type="file" id="custom-audio-input" accept="audio/*" style="display: none;">
+            <button class="btn-secondary" style="font-size: 0.8rem; padding: 6px 14px;" onclick="triggerYouTubeAudioSwitch()">
+              🛡️ YouTube Audio
+            </button>
+            <button class="btn-secondary" style="font-size: 0.8rem; padding: 6px 14px;" onclick="document.getElementById('custom-audio-input').click()">
+              🎵 Load Local File
+            </button>
+          </div>
+        </div>
+
+        <!-- Visualizer Container -->
+        <div class="visualizer-card">
+          <!-- Top bar -->
+          <div class="visualizer-topbar">
+            <div class="visualizer-stats">
+              <span>Format: <strong id="preview-stat-format">Syllable</strong></span>
+              <span>Lines: <strong id="preview-stat-lines">0</strong></span>
+              <span>Syllables: <strong id="preview-stat-syllables">0</strong></span>
+            </div>
+            <div class="badge-row">
+              <span class="pill-badge green" id="preview-source-badge">Custom</span>
+            </div>
+          </div>
+
+          <!-- Karaoke Lyric Stage -->
+          <div class="karaoke-stage" id="karaoke-stage">
+            <div style="text-align: center; color: var(--text-dim); margin-top: 60px;">
+              Upload or parse lyrics in Step 2 to preview synced lyrics here.
+            </div>
+          </div>
+
+          <!-- Loading Screen Overlay for Ad-Blocked YouTube Audio -->
+          <div id="preview-audio-loader" class="preview-audio-loader" style="display: none;">
+            <div class="loader-card-inner">
+              <div class="equalizer-bars" style="margin-bottom: 1.25rem;">
+                <span class="eq-bar bar-1"></span>
+                <span class="eq-bar bar-2"></span>
+                <span class="eq-bar bar-3"></span>
+                <span class="eq-bar bar-4"></span>
+                <span class="eq-bar bar-5"></span>
+                <span class="eq-bar bar-6"></span>
+                <span class="eq-bar bar-7"></span>
+              </div>
+              <h3 style="font-size: 1.15rem; color: #fff; margin-bottom: 6px; font-weight: 700;">
+                🛡️ Loading Ad-Blocked YouTube Audio
+              </h3>
+              <p id="preview-loader-subtitle" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+                Resolving audio stream and engaging anti-ad shield...
+              </p>
+              <div class="proc-progress-wrapper" style="width: 260px; margin: 8px auto 10px auto;">
+                <div class="proc-progress-bar" id="preview-loader-bar" style="width: 20%;"></div>
+              </div>
+              <div id="preview-loader-status" style="font-size: 0.78rem; color: #1ed760; font-weight: 600;">
+                Locating YouTube audio...
+              </div>
+            </div>
+          </div>
+
+          <!-- Audio Scrubber & Controls -->
+          <div class="audio-player-bar">
+            <input type="range" class="scrubber-slider" id="audio-scrubber" min="0" max="100" value="0" step="0.05">
+            <div class="player-controls">
+              <div class="player-actions">
+                <button class="play-toggle-btn" id="btn-play-pause" onclick="togglePlayPause()">▶</button>
+                <div class="time-display">
+                  <span id="time-current">00:00</span> / <span id="time-total">00:30</span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <label style="font-size: 0.75rem; color: var(--text-muted);">Speed:</label>
+                <button class="btn-icon" onclick="setPlaybackRate(0.75)">0.75x</button>
+                <button class="btn-icon" onclick="setPlaybackRate(1.0)">1.0x</button>
+                <button class="btn-icon" onclick="setPlaybackRate(1.25)">1.25x</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; justify-content: space-between;">
+          <button class="btn-secondary" onclick="goToStep(2)">← Back to Upload</button>
+          <button class="btn-primary" onclick="goToStep(4)">
+            Proceed to Publish Live →
+          </button>
+        </div>
+      </article>
+
+      <!-- STEP 4: PUBLISH LIVE -->
+      <article class="glass-panel" id="step-panel-4" style="display: none;">
+        <div class="panel-header">
+          <h2>4. Publish Live</h2>
+          <p>Save directly into your local or hosted custom database. Spotify Pro can fetch it instantly.</p>
+        </div>
+
+        <!-- Summary before publishing -->
+        <div class="selected-song-banner" id="publish-summary-banner" style="display: flex;">
+          <img src="" id="publish-art" class="banner-art" alt="Art">
+          <div class="banner-details">
+            <h3 id="publish-title">Song Title</h3>
+            <p id="publish-artist">Artist • Album</p>
+            <div class="badge-row" style="align-items: center; margin-top: 6px;">
+              <span class="pill-badge green" id="publish-type-badge">🔥 Syllable Synced</span>
+              <select id="publish-type-select" class="input-field" style="padding: 2px 10px; height: 28px; font-size: 0.78rem; width: auto;" onchange="onPublishTypeChange(this.value)">
+                <option value="Syllable">🔥 Syllable</option>
+                <option value="Word">⚡ Word</option>
+                <option value="Line">📄 Line</option>
+                <option value="Static">📝 Static</option>
+              </select>
+              <span class="pill-badge" id="publish-format-badge">TTML</span>
+              <span class="pill-badge" id="publish-id-badge">ID: -</span>
+              <span class="pill-badge purple" id="publish-ai-badge" style="display: none;">✨ Alignmenter</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin: 2rem 0;">
+          <button class="btn-primary" id="btn-publish-live" style="font-size: 1.15rem; padding: 1.1rem 2.5rem;" onclick="publishLyricsLive()">
+            🚀 Publish Live to SyllDB
+          </button>
+        </div>
+
+        <!-- Success Result Box -->
+        <div class="publish-success-card" id="publish-success-card">
+          <div class="success-icon">✓</div>
+          <h2>Published to SyllDB!</h2>
+          <p style="color: var(--text-muted); margin-top: 6px;">Your custom lyrics are now live in SyllDB Cloud Database and immediately queryable by Spotify Plus.</p>
+
+          <div class="api-copy-box">
+            <code id="api-endpoint-url">https://sylldb.ajob.workers.dev/api/lyrics/&lt;track_id&gt;</code>
+            <button class="btn-icon" onclick="copyApiUrl()">Copy URL</button>
+          </div>
+
+          <div style="display: flex; justify-content: center; gap: 12px; margin-top: 1.5rem;">
+            <button class="btn-secondary" onclick="viewInManager()">View in SyllDB Manager</button>
+            <button class="btn-primary" onclick="resetWizard()">Upload Another Song</button>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; justify-content: flex-start;">
+          <button class="btn-secondary" onclick="goToStep(3)">← Back to Preview</button>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- ============================================== -->
+    <!-- TAB 2: WEB TTML MANAGER -->
+    <!-- ============================================== -->
+    <section id="tab-manager" class="tab-pane" role="tabpanel">
+      <div class="glass-panel">
+        <div class="manager-toolbar">
+          <div>
+            <h2>SyllDB Cloud & TTML Manager</h2>
+            <p>Inspect, edit timestamps, re-export, and manage published songs in your 24/7 SyllDB database.</p>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <div class="manager-search">
+              <input type="text" id="manager-filter-input" class="search-input" style="padding-left: 1.25rem;" placeholder="Filter by title, artist, or Spotify ID..." oninput="filterManagerSongs()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Table of published lyrics -->
+        <div style="overflow-x: auto;">
+          <table class="songs-table">
+            <thead>
+              <tr>
+                <th>Song</th>
+                <th>Format</th>
+                <th>Type</th>
+                <th>Spotify Track ID</th>
+                <th>Updated</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="manager-songs-tbody">
+              <!-- Populated by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="manager-empty-state" style="text-align: center; padding: 3rem; color: var(--text-dim); display: none;">
+          No custom lyrics stored in the database yet. Click "Upload & Sync" to add your first track!
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- TAB 3: REST API & DOCUMENTATION -->
+    <!-- ============================================== -->
+    <section id="tab-api" class="tab-pane" role="tabpanel">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2>⚡ Custom Lyrics REST API & Live Tester</h2>
+          <p>Query your SQLite lyrics database directly from any web player, Spicetify extension, or client.</p>
+        </div>
+
+        <!-- Live Endpoint Tester -->
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem;">
+          <h3 style="margin-bottom: 0.75rem;">Live API Tester</h3>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="test-track-id" class="input-field" style="flex: 1;" placeholder="Enter Track ID (e.g. 4cOdK2wGLETKBW3PvgPWqT)">
+            <button class="btn-primary" onclick="testApiQuery()">Fetch Lyrics</button>
+          </div>
+          <pre id="test-api-output" style="margin-top: 1rem; background: #000; padding: 1rem; border-radius: var(--radius-sm); max-height: 250px; overflow-y: auto; color: #a7f3d0; font-family: monospace; font-size: 0.82rem; display: none;"></pre>
+        </div>
+
+        <!-- Available Endpoints -->
+        <div style="line-height: 1.6; color: var(--text-muted); font-size: 0.95rem;">
+          <h3 style="color: var(--text-main); margin-bottom: 0.75rem;">Available Endpoints</h3>
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.85rem;">
+            <li>
+              <code style="color: #67e8f9; background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 4px;">GET /api/lyrics/:trackId</code>
+              <p style="margin-top: 4px; font-size: 0.88rem;">Returns the canonical syllable/line JSON for the given track ID.</p>
+            </li>
+            <li>
+              <code style="color: #67e8f9; background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 4px;">GET /api/lyrics/search?title=...&artist=...</code>
+              <p style="margin-top: 4px; font-size: 0.88rem;">Searches published lyrics by song title and optional artist name.</p>
+            </li>
+            <li>
+              <code style="color: #67e8f9; background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 4px;">GET /api/all</code>
+              <p style="margin-top: 4px; font-size: 0.88rem;">Returns metadata array of all songs stored in the database.</p>
+            </li>
+            <li>
+              <code style="color: #67e8f9; background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 4px;">GET /api/export/:id/:format</code>
+              <p style="margin-top: 4px; font-size: 0.88rem;">Downloads lyrics in <code>ttml</code>, <code>elrc</code>, <code>ass</code>, or <code>json</code> format.</p>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Edit Lyrics Modal in TTML Manager -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-title">Edit Custom Lyrics</h3>
+        <button class="btn-icon" onclick="closeEditModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-item-id">
+        <div class="form-row">
+          <div class="input-group">
+            <label for="edit-song-title">Song Title</label>
+            <input type="text" id="edit-song-title" class="input-field">
+          </div>
+          <div class="input-group">
+            <label for="edit-artist-name">Artist Name</label>
+            <input type="text" id="edit-artist-name" class="input-field">
+          </div>
+        </div>
+        <div class="form-row" style="margin-top: 1rem;">
+          <div class="input-group">
+            <label for="edit-spotify-id">Spotify Track ID</label>
+            <input type="text" id="edit-spotify-id" class="input-field">
+          </div>
+          <div class="input-group">
+            <label for="edit-lyric-type">Lyric Sync Type</label>
+            <select id="edit-lyric-type" class="input-field">
+              <option value="Syllable">🔥 Syllable (Sub-word Synced)</option>
+              <option value="Word">⚡ Word (Word-by-word Synced)</option>
+              <option value="Line">📄 Line (Line Synced)</option>
+              <option value="Static">📝 Static (Unsynced Plain Text)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" style="margin-top: 1rem;">
+          <div class="input-group" style="grid-column: 1 / -1;">
+            <label for="edit-album-name">Album Name</label>
+            <input type="text" id="edit-album-name" class="input-field">
+          </div>
+        </div>
+        <div class="input-group" style="margin-top: 1rem;">
+          <label for="edit-canonical-json">Canonical Syllable JSON</label>
+          <textarea id="edit-canonical-json" class="raw-textarea" style="height: 280px;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+        <button class="btn-primary" onclick="saveEditedLyrics()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Processing Modal for yt-dlp Audio Conversion -->
+  <div class="modal-overlay" id="audio-processing-modal" style="display: none; z-index: 1000;">
+    <div class="modal-card processing-card">
+      <div class="processing-visualizer">
+        <div class="equalizer-bars">
+          <span class="eq-bar bar-1"></span>
+          <span class="eq-bar bar-2"></span>
+          <span class="eq-bar bar-3"></span>
+          <span class="eq-bar bar-4"></span>
+          <span class="eq-bar bar-5"></span>
+          <span class="eq-bar bar-6"></span>
+          <span class="eq-bar bar-7"></span>
+        </div>
+      </div>
+
+      <div class="processing-header">
+        <h3 id="proc-modal-title">Converting Audio via yt-dlp</h3>
+        <p id="proc-modal-subtitle">Extracting full audio stream & encoding 320kbps MP3 for karaoke preview...</p>
+      </div>
+
+      <!-- Track preview inside modal -->
+      <div class="processing-track-badge" id="proc-track-badge">
+        <img src="" id="proc-track-art" class="proc-art" alt="Art">
+        <div class="proc-details">
+          <div id="proc-track-title" class="proc-title">Song Title</div>
+          <div id="proc-track-artist" class="proc-artist">Artist Name</div>
+        </div>
+      </div>
+
+      <!-- Pipeline Stages Stepper -->
+      <div class="proc-stepper">
+        <div class="proc-step active" id="step-yt-search">
+          <span class="step-indicator"></span>
+          <div class="step-text">
+            <strong>1. Locate Source Track</strong>
+            <span>Finding highest-quality YouTube Music audio stream</span>
+          </div>
+        </div>
+        <div class="proc-step" id="step-yt-download">
+          <span class="step-indicator"></span>
+          <div class="step-text">
+            <strong>2. Download Audio Stream</strong>
+            <span id="proc-download-sub">Pulling audio via yt-dlp...</span>
+          </div>
+        </div>
+        <div class="proc-step" id="step-yt-convert">
+          <span class="step-indicator"></span>
+          <div class="step-text">
+            <strong>3. Transcode to High-Quality MP3</strong>
+            <span>Encoding 320kbps MP3 with FFmpeg</span>
+          </div>
+        </div>
+        <div class="proc-step" id="step-yt-mount">
+          <span class="step-indicator"></span>
+          <div class="step-text">
+            <strong>4. Mount in Karaoke Engine</strong>
+            <span>Synchronizing interactive timeline waveforms</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="proc-progress-wrapper">
+        <div class="proc-progress-bar" id="proc-progress-bar" style="width: 15%;"></div>
+      </div>
+      <div class="proc-status-label" id="proc-status-label">Initializing audio extraction...</div>
+
+      <div class="modal-footer" style="margin-top: 1.25rem; justify-content: flex-end; padding-top: 0.75rem;">
+        <button class="btn-secondary" onclick="dismissAudioProcessingModal()">Run in Background</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating YouTube Audio/Video Dock with Anti-Ad Shield -->
+  <div id="yt-player-dock" style="position: fixed; bottom: 16px; right: 16px; z-index: 1000; width: 220px; height: 124px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.15); background: #000; display: none; transition: all 0.3s ease;">
+    <div id="yt-player" style="width: 100%; height: 100%;"></div>
+    <div id="yt-dock-overlay" style="position: absolute; top: 0; left: 0; right: 0; height: 26px; background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, transparent 100%); display: flex; align-items: center; justify-content: space-between; padding: 0 6px; pointer-events: none;">
+      <span style="font-size: 10px; font-weight: 700; color: #1ed760; letter-spacing: 0.5px;">🛡️ YOUTUBE AUDIO</span>
+      <button onclick="toggleYtDockMini()" style="pointer-events: auto; background: rgba(255,255,255,0.2); border: none; color: #fff; border-radius: 4px; width: 18px; height: 18px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;">−</button>
+    </div>
+  </div>
+
+  <audio id="audio-engine" preload="auto"></audio>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="app.js"></script>
+</body>
+</html>

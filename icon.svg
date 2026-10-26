@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Logo Primary Cyan-to-Green Syllable Gradient -->
+    <linearGradient id="syll-gradient" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe" />
+      <stop offset="45%" stop-color="#0ea5e9" />
+      <stop offset="75%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#1ed760" />
+    </linearGradient>
+
+    <linearGradient id="eq-gradient" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#1ed760" />
+      <stop offset="50%" stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#00f2fe" />
+    </linearGradient>
+
+    <!-- Glow Filters -->
+    <filter id="neon-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur1" />
+      <feGaussianBlur stdDeviation="4" result="blur2" />
+      <feMerge>
+        <feMergeNode in="blur1" />
+        <feMergeNode in="blur2" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="soft-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Transparent Background (No bounding box/rectangles) -->
+
+  <!-- Ambient Light Halos -->
+  <circle cx="210" cy="180" r="130" fill="#00f2fe" opacity="0.12" filter="url(#neon-glow)" />
+  <circle cx="300" cy="270" r="130" fill="#1ed760" opacity="0.12" filter="url(#neon-glow)" />
+
+  <!-- ============================================== -->
+  <!-- SYLLDB GEOMETRIC WAVEFORM 'S' MONOGRAM -->
+  <!-- ============================================== -->
+  <g id="sylldb-mark" filter="url(#soft-glow)">
+
+    <!-- UPPER LOOP: Segmented Syllable Arc Blocks (Cyan dominant) -->
+    <!-- Segment 1: Top Right Arrowhead / Terminal Block -->
+    <path d="M 330 110 L 375 110 L 340 162 L 305 162 Z" fill="#00f2fe" />
+    
+    <!-- Segment 2: Upper Outer Header Arc -->
+    <path d="M 235 110 L 315 110 L 290 162 L 235 162 Z" fill="#00e5ff" />
+    
+    <!-- Segment 3: Upper Left Corner Arc (Outer curve) -->
+    <path d="M 180 145 C 190 120 210 110 225 110 L 225 162 C 218 162 210 168 206 178 Z" fill="#00d2ff" />
+    
+    <!-- Segment 4: Upper Left Vertical Spine -->
+    <path d="M 168 185 L 220 185 L 220 230 L 168 230 Z" fill="#00b4d8" />
+
+    <!-- Segment 5: Upper Waist Transition Block -->
+    <path d="M 172 240 L 224 240 L 244 268 L 192 268 Z" fill="#0ea5e9" />
+
+    <!-- ============================================ -->
+    <!-- CENTER CORE: Audio Frequency Equalizer Waveform -->
+    <!-- ============================================ -->
+    <g id="center-equalizer">
+      <!-- Bar 1 (Left low) -->
+      <rect x="238" y="215" width="8" height="60" rx="4" fill="url(#eq-gradient)" opacity="0.9" />
+      <!-- Bar 2 (Mid-left rise) -->
+      <rect x="252" y="185" width="8" height="116" rx="4" fill="url(#eq-gradient)" />
+      <!-- Bar 3 (Center Peak) -->
+      <rect x="266" y="160" width="9" height="168" rx="4.5" fill="url(#eq-gradient)" />
+      <!-- Bar 4 (Mid-right high) -->
+      <rect x="281" y="180" width="8" height="126" rx="4" fill="url(#eq-gradient)" />
+      <!-- Bar 5 (Right drop) -->
+      <rect x="295" y="210" width="8" height="70" rx="4" fill="url(#eq-gradient)" opacity="0.9" />
+    </g>
+
+    <!-- LOWER LOOP: Segmented Syllable Arc Blocks (Green dominant) -->
+    <!-- Segment 6: Lower Waist Transition Block -->
+    <path d="M 320 222 L 344 250 L 292 250 L 268 222 Z" fill="#10b981" />
+
+    <!-- Segment 7: Lower Right Vertical Spine -->
+    <path d="M 292 260 L 344 260 L 344 305 L 292 305 Z" fill="#10b981" />
+
+    <!-- Segment 8: Lower Right Corner Arc -->
+    <path d="M 344 315 C 344 340 320 365 285 365 L 285 315 C 298 315 306 310 306 302 Z" fill="#14b8a6" />
+
+    <!-- Segment 9: Lower Base Arc -->
+    <path d="M 215 365 L 275 365 L 275 315 L 235 315 Z" fill="#1ed760" />
+
+    <!-- Segment 10: Lower Left Terminal Fin -->
+    <path d="M 170 340 L 205 365 L 225 315 L 195 315 Z" fill="#1ed760" />
+
+    <!-- Inner Core Syllable Pulse Indicator -->
+    <circle cx="270" cy="244" r="5" fill="#ffffff" filter="url(#soft-glow)" />
+  </g>
+
+  <!-- ============================================== -->
+  <!-- TYPOGRAPHY: SyllDB Brand Wordmark -->
+  <!-- ============================================== -->
+  <text x="256" y="440" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="46" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="4">
+    Syll<tspan fill="#1ed760">DB</tspan>
+  </text>
+  
+  <text x="256" y="465" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle" letter-spacing="6">
+    HIGH-PRECISION LYRICS ENGINE
+  </text>
+</svg>
